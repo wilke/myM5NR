@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # DOCUMENTATION
 #
@@ -44,15 +44,18 @@ fi
 # binary location from http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 BIN=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+if [ -z ${SOURCES+x} ]; then
 
-SOURCE_CONFIG=${BIN}/../sources.cfg
+	SOURCE_CONFIG=${BIN}/../sources.cfg
 
-if [ ! -e ${SOURCE_CONFIG} ]; then
-	echo "source config file ${SOURCE_CONFIG} not found"
-	exit 1
+	if [ ! -e ${SOURCE_CONFIG} ]; then
+		echo "source config file ${SOURCE_CONFIG} not found"
+		exit 1
+	fi
+
+	source ${SOURCE_CONFIG} # this defines ${SOURCES}
+
 fi
-
-source ${SOURCE_CONFIG} # this defines ${SOURCES}
 
 
 DOWNLOADS_EXIST=""
@@ -119,15 +122,16 @@ function download_COGs {
 
 function download_FungiDB {
 	# use old version, does not seem to be updated anymore
-	echo "Please use archvied version for FungiDB."
+	echo "Please use archived version for FungiDB."
 	return 1
 	#wget -v -N -P ${1} 'http://fungalgenomes.org/public/mobedac/for_VAMPS/fungalITSdatabaseID.taxonomy.seqs.gz' || return $?
 }
 
 function download_IMG {
-	echo ftp path is missing
+	echo "Please use archived version for IMG."
+	#echo "ftp path is missing (copy archived version)"
 	#time lftp -c "open -e 'mirror -v --no-recursion -I img_core_v400.tar /pub/IMG/ ${1}' ftp://ftp.jgi-psf.org"
-	exit 1
+	return 1
 }
 
 function download_InterPro {
@@ -175,7 +179,9 @@ function download_SEED {
 	# TODO use current
 	#CURRENT="ProblemSets.current"
 	CURRENT="ProblemSets.2015.01"
-	time lftp -c "open -e 'mirror -v /SeedProjectionRepository/Releases/${CURRENT}/ ${1}' ftp://ftp.theseed.org"
+
+	time ${BIN}/querySAS.pl -source SEED  1> ${1}/SEED.md52id2func2org || return $?
+	time lftp -c "open -e 'mirror -v /SeedProjectionRepository/Releases/${CURRENT}/ ${1}' ftp://ftp.theseed.org" || return $?
 
 	#old:
 	#time lftp -c "open -e 'mirror -v --no-recursion -I SEED.fasta /misc/Data/idmapping/ ${1}' ftp://ftp.theseed.org"
@@ -183,6 +189,9 @@ function download_SEED {
 }
 
 
+function download_Subsystems {
+	time ${BIN}/querySAS.pl -source Subsystems  1> ${1}/Subsystems.subsystem2role2seq || return $?
+}
 
 function download_UniProt {
 	time lftp -c "open -e 'mirror -v -e --delete-first -I reldate.txt  /pub/databases/uniprot/current_release/knowledgebase/complete/ ${1}' ftp.uniprot.org" || return $?
@@ -194,7 +203,7 @@ function download_UniProt {
 #### RNA
 
 function download_SILVA {
-	time lftp -c "open -e 'mirror -v --no-recursion /current/Exports/ ${1}' ftp://ftp.arb-silva.de" || return $?
+	time lftp -c "open -e 'mirror -v --no-recursion --dereference /current/Exports/ ${1}' ftp://ftp.arb-silva.de" || return $?
 	mdir -p ${1}/rast
 	time lftp -c "open -e 'mirror -v --no-recursion /current/Exports/rast ${1}/rast' ftp://ftp.arb-silva.de" || return $?
 }

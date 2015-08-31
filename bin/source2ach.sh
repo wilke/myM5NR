@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # DOCUMENTATION
 #
@@ -38,17 +38,18 @@ fi
 BIN=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 
-SOURCE_CONFIG=${BIN}/../sources.cfg
+if [ -z ${SOURCES+x} ]; then
 
-if [ ! -e ${SOURCE_CONFIG} ] ; then
-echo "source config file ${SOURCE_CONFIG} not found"
-exit 1
+	SOURCE_CONFIG=${BIN}/../sources.cfg
+
+	if [ ! -e ${SOURCE_CONFIG} ]; then
+		echo "source config file ${SOURCE_CONFIG} not found"
+		exit 1
+	fi
+
+	source ${SOURCE_CONFIG} # this defines ${SOURCES}
+
 fi
-
-source ${SOURCE_CONFIG} # this defines ${SOURCES}
-
-
-
 
 
 OUTPUT_EXIST=""
@@ -142,9 +143,13 @@ function source2ach_IMG {
 }
 
 function source2ach_SEED {
-	#mkdir parsed/SEED
 	#gunzip raw/SEED/subsystems2role.gz  ?????
+	cp ${1}/SEED.md52id2func2org ${2}/ || return $?
 	$BIN/source2ach.py -v -a seed -f fasta -p 1 -d ${2} SEED ${1}/all.faa.gz || return $?
+}
+
+function source2ach_Subsystems {
+	cp ${1}/Subsystems.subsystem2role2seq ${2}/ || return $?
 }
 
 function source2ach_Phantome {

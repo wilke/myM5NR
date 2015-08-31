@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 use strict;
 use SAPserver; 
 use Data::Dumper;
@@ -147,7 +149,7 @@ sub process_genomes{
 	           my $role = $results->{$gene};
 	           if (defined $role) {
 	               # Yes, print it.
-	               print join "\t" , seq2hexdigest($id2seq->{$gene}) , $gene , $role , $genomes->{$gid} , 'SEED' ,$id2seq->{$gene} , "\n" ;
+	               print join ("\t" , seq2hexdigest($id2seq->{$gene}) , $gene , $role , $genomes->{$gid} , 'SEED' ,$id2seq->{$gene} ) , "\n" ;
 	           } else {
 	               # No, emit a warning.
 	               print STDERR "$gene was not found.\n";

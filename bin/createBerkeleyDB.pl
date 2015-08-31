@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 use warnings ;
 use strict ;
 use DB_File ;
@@ -8,7 +10,7 @@ use Getopt::Long;
 my @files ; # source files for import
 my %hash  ; # DB Hash
 
-my $filename = "myM5NR.SEED.berkeleyDB" ;
+my $filename = "myM5NR.tmp.berkeleyDB" ;
  
  
 my $verbose = 0 ;
@@ -16,6 +18,7 @@ my $debug 	= 0 ;
 
 GetOptions ( 
 	"load=s" => \@files , 
+	"dbname=s" => \$filename ,
 	'verbose+' => \$verbose ,
 	'debug+'   => \$debug   ,
 	);
@@ -27,10 +30,7 @@ unlink $filename ;
 my $db = tie %hash, 'DB_File', $filename, O_CREAT|O_RDWR, 0666, $DB_HASH or die "Cannot open $filename: $!\n" ;
 
 # Install DBM Filters
-$db->filter_fetch_key  ( sub { s/\0$//    } ) ;
-$db->filter_store_key  ( sub { $_ .= "\0" } ) ;
-$db->filter_fetch_value( sub { s/\0$//    } ) ;
-$db->filter_store_value( sub { $_ .= "\0" } ) ;
+
 
 $hash{"abc"} = "def" ;
 my $a = $hash{"ABC"} ;
@@ -52,13 +52,17 @@ foreach my $f (@files) {
 				print STDERR $md5 , "\n";
 				next;
 			}
-			
+
+			my $value = join "\t" ,  $id , $func , $org , $source ;
+			$value .= "\n" ;
+
 			if ($hash{$md5}){	
-				$hash{$md5} = join "\n" , $hash{$md5} , ( join "\t" ,  $id , $func , $org , $source ) ;
-				# print STDERR "YEAH\n" ;
+				$hash{$md5} = $hash{$md5} . $value  ;
+				print STDERR $hash{$md5} if ($debug);
 			}
 			else{
-				$hash{$md5} = join "\t" ,  $id , $func , $org , $source ;
+				$hash{$md5} = $value ;
+				print STDERR $hash{$md5} if ($debug) ;
 				
 			} 
 		}
